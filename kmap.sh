@@ -33,12 +33,6 @@ SED_DG="${C}[1;90m&${C}[0m"
 NC="${C}[0m"
 UNDERLINED="${C}[5m"
 ITALIC="${C}[3m"
-
-################################################################################
-################################################################################
-# Main program                                                                 #
-################################################################################
-################################################################################
 function goto
 {
     label=$1
@@ -47,9 +41,31 @@ function goto
     eval "$cmd"
     exit
 }
+
 function pause(){
    read -p "$*"
 }
+
+function pingFirst
+{
+    echo
+    # Prompt user to choose to ping or not before continuing.  
+    read -p "${BLUE}Ping first? It may be useful to check if the host is up. (y or n) ${DG}" ping_choice 
+
+    case $ping_choice in
+        y)
+	echo "${FGC}${YELLOW}pinging $ip_address hit ctrl + c to stop pinging and continue${NC}${LIGHT_CYAN}";
+	ping $ip_address;;
+	n);;
+	*);;
+    esac
+}
+
+################################################################################
+################################################################################
+# Main program                                                                 #
+################################################################################
+################################################################################
 echo "    ${RED}"
 echo -e "
 	 ██ ▄█▀ ███▄ ▄███▓ ▄▄▄       ██▓███  
@@ -116,16 +132,8 @@ echo
 echo    
 # Prompt user for IP address or host to scan
 read -p "${BLUE}Enter the IP address or hostname to scan: ${DG}" ip_address
-
-read -p "${BLUE}Ping first? (y or n) ${DG}" ping_choice 
-
-case $ping_choice in
-    y)
-    echo -e "${LG}pinging $ip_address hit ctrl + c to stop pinging and continue";
-    ping $ip_address;;
-    n);;
-    *) echo "${RED}Invalid ping option choice"; exit 1;;
-esac
+# Uncomment the line below to add an option to ping the ip address before continuing.  This can be useful to check if the host is up before scanning.
+# pingFirst
 
 # Prompt user to choose scan type
 echo "${BLUE}
@@ -246,5 +254,5 @@ echo -e "${GREEN}\n\nScan complete"
 
 # If the user chose to save the output from the scan, displays the filenames where the output was saved.
 if [[ -n $save_option ]]; then
-    echo -e "\nScan results saved to $save_filename.nmap, $save_filename.gnmap, and $save_filename.xml"
+    echo -e "\nScan results saved to $save_filename.nmap, $save_filename.gnmap, and $save_filename.xml"| fmt -w 60
 fi
