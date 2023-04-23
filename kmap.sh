@@ -33,6 +33,7 @@ SED_DG="${C}[1;90m&${C}[0m"
 NC="${C}[0m"
 UNDERLINED="${C}[5m"
 ITALIC="${C}[3m"
+
 function goto
 {
     label=$1
@@ -161,7 +162,7 @@ case $scan_type_choice in
     2) scan_type="-sT";;
     3) scan_type="-sU";;
     4) scan_type="-sS -sU -sV";;
-    *) echo "${RED}Invalid scan type choice"; goto scanType;;
+    *) echo "${RED}Invalid scan type choice: \"$scan_type_choice\""; goto scanType;;
 esac
 
 #timing:
