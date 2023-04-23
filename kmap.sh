@@ -125,7 +125,7 @@ echo -ne '                   '"${FGC}${LIGHT_CYAN}"' 🕵🔎 Courtesy of Kaotic
 sleep .5
 echo "${LIGHT_MAGENTA}  "
 echo
-echo "  KMap is a user friendly tool for running various types of nmap scans with simple choice parameters" |fmt -w 60
+echo "  KMap is a user friendly tool for running various types of nmap scans allowing user to set scan parameters by making simple choices." |fmt -w 60
 echo 
 pause  '  '${FGC}${GREEN}' Press [Enter] key to continue...'${NC}
 
