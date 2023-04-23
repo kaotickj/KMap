@@ -15,4 +15,4 @@ sudo apt install nmap
  sudo ./kmap.sh
  ```
 After the "splash screen" loads, hit enter, and follow the prompts to enter the parameters for the scan.
-After callecting all of the options, the script constructs the appropriate command-line arguments for the nmap command and runs the scan with sudo nmap. Finally, the script displays a message indicating that the scan is complete and, if the user chose to save the output, the filenames of the saved results.
+After collecting all of the options, the script constructs the appropriate command-line arguments for the nmap command and runs the scan with sudo nmap. Finally, the script displays a message indicating that the scan is complete and, if the user chose to save the output, the filenames of the saved results.
