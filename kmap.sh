@@ -36,7 +36,7 @@ ITALIC="${C}[3m"
 function goto
 {
     label=$1
-    shift;
+#    shift;
     cmd=$(sed -n "/$label:/{:a;n;p;ba};" $0 | grep -v ':$')
     eval "$cmd"
     exit
@@ -130,11 +130,22 @@ pause  '  '${FGC}${GREEN}' Press [Enter] key to continue...'${NC}
 clear
 echo
 echo    
+#ip_enter:
 # Prompt user for IP address or host to scan
 read -p "${BLUE}Enter the IP address or hostname to scan: ${DG}" ip_address
+
+# Validate input as IP address or hostname
+if [[ $ip_address =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || \
+      $ip_address =~ ^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.[a-zA-Z]{2,}$ ]]; then
+    goto scanType
+else
+    echo "Input, \"$ip_address\" is not a valid IP address or hostname"
+    goto ip_enter
+fi
 # Uncomment the line below to add an option to ping the ip address before continuing.  This can be useful to check if the host is up before scanning.
 # pingFirst
 
+#scanType:
 # Prompt user to choose scan type
 echo "${BLUE}
 Please choose a scan type from the list below:
@@ -150,9 +161,10 @@ case $scan_type_choice in
     2) scan_type="-sT";;
     3) scan_type="-sU";;
     4) scan_type="-sS -sU -sV";;
-    *) echo "${RED}Invalid scan type choice"; exit 1;;
+    *) echo "${RED}Invalid scan type choice"; goto scanType;;
 esac
 
+#timing:
 # Prompt user to choose timing option
 echo "
 ${BLUE}Please choose a timing option from the list below:
@@ -172,9 +184,10 @@ case $timing_choice in
     4) timing_option="-T3";;
     5) timing_option="-T4";;
     6) timing_option="-T5";;
-    *) echo "${RED}Invalid timing option choice"; exit 1;;
+    *) echo "${RED}Invalid timing option choice"; goto timing;;
 esac
 
+#scripts:
 # Prompt user to choose script option
 echo "
 ${BLUE}Please choose a script option from the list below:
@@ -196,9 +209,10 @@ case $script_choice in
     5) script_option="--script safe";;
     6) script_option="--script all";;
     7) script_option="";;
-    *) echo "${RED}Invalid script option choice"; exit 1;;
+    *) echo "${RED}Invalid script option choice"; goto scripts;;
 esac
 
+#port:
 # Prompt user to choose port scan option
 echo "
 ${BLUE}Please choose a port scan option from the list below (press Enter without choosing an option to input a range of ports):
@@ -221,9 +235,10 @@ case $port_option_choice in
 	    exit 1
 	fi
         port_option="-p $port_range";;
-    *) echo "${RED}Invalid port option choice"; exit 1;;
+    *) echo "${RED}Invalid port option choice"; goto port;;
 esac
 
+#aggressive:
 # Sets the appropriate nmap option based on the user's choice for aggressive scan and OS detection.
 echo
 read -p "${BLUE}Use Aggressive scan + OS Detection ( y or n)? ${DG}" aggressive_option_choice
@@ -231,9 +246,10 @@ read -p "${BLUE}Use Aggressive scan + OS Detection ( y or n)? ${DG}" aggressive_
 case $aggressive_option_choice in
     y) aggressive_option="-A -O";;
     n) aggressive_option="";;
-    *) echo "${RED}Invalid aggressive scan option choice"; exit 1;;
+    *) echo "${RED}Invalid aggressive scan option choice"; goto aggressive;;
 esac
 
+#save:
 # Sets the appropriate nmap option based on the user's choice for saving the output from the scan.
 echo
 read -p "${BLUE}Save output from scan ( y or n)? ${DG}" save_option_choice
@@ -243,7 +259,7 @@ case $save_option_choice in
         read -p "${BLUE}Enter filename to save: ${DG}" save_filename;
         save_option="-oA $save_filename";;
     n) save_option="";;
-    *) echo "${RED}Invalid save option choice"; exit 1;;
+    *) echo "${RED}Invalid save option choice"; goto save;;
 esac
 
 # Runs the nmap scan with the chosen options.
