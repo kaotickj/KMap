@@ -1,5 +1,6 @@
 # KMap
-This is a Bash script that prompts for an IP address to scan, and then presents a series of options for customizing the Nmap scan. The options include selecting the type of scan, the timing option, the script option, the port scan option, and whether to use aggressive scanning and OS detection, as well as whether to save the output from the scan. 
+KMap is a user friendly tool for running various types of nmap scans allowing user to set scan parameters by making simple choices.
+The script prompts for an IP address to scan, and then presents a series of options for customizing the Nmap scan. The options include selecting the type of scan, the timing option, the script option, the port scan option, and whether to use aggressive scanning and OS detection, as well as whether to save the output from the scan. 
 ### Dependencies:
 * nmap
 ```
