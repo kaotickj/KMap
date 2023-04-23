@@ -56,6 +56,7 @@ function pingFirst
     case $ping_choice in
         y)
 	echo "${FGC}${YELLOW}pinging $ip_address hit ctrl + c to stop pinging and continue${NC}${LIGHT_CYAN}";
+	echo
 	ping $ip_address;;
 	n);;
 	*);;
@@ -138,15 +139,15 @@ read -p "${BLUE}Enter the IP address or hostname to scan: ${DG}" ip_address
 # Validate input as IP address or hostname
 if [[ $ip_address =~ ^([0-9]{1,3}\.){3}[0-9]{1,3}$ || \
       $ip_address =~ ^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.[a-zA-Z]{2,}$ ]]; then
-    goto scanType
+      goto scanType
 else
     echo "Input, \"$ip_address\" is not a valid IP address or hostname"
     goto ip_enter
 fi
-# Uncomment the line below to add an option to ping the ip address before continuing.  This can be useful to check if the host is up before scanning.
-# pingFirst
-
 #scanType:
+# Uncomment the line below to add an option to ping the ip address before continuing.  This can be useful to check if the host is up before scanning.
+#  pingFirst
+
 # Prompt user to choose scan type
 echo "${BLUE}
 Please choose a scan type from the list below:
@@ -265,7 +266,7 @@ esac
 
 # Runs the nmap scan with the chosen options.
 echo -e "${LG}\nScanning $ip_address..."
-nmap_args=(" -vv $scan_type $timing_option $aggressive_option $script_option $port_option $ip_address $save_option")
+nmap_args=("-vv $scan_type $timing_option $aggressive_option $script_option $port_option $ip_address $save_option")
 sudo nmap $nmap_args
 echo -e "${GREEN}\n\nScan complete"
 
