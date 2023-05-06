@@ -1,6 +1,9 @@
 ![Shell Command Line Version](https://img.shields.io/badge/Shell-CLI-red.svg)
+
 ![KMap](kmap.png)
+
 ![Python GUI Version](https://img.shields.io/badge/Python-GUI-green.svg)
+
 ![KMap-Python](kmap-py.png)
 # KMap
 KMap is a user friendly tool for running various types of nmap scans allowing user to set scan parameters by making simple choices.
