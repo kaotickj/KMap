@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-# Script: KMap v 0.8
+# Script: KMap v 0.9
 # Author: kaotickj
-# Website: kdgwebsolutions.com
+# Website: https://github.com/kaotickj/KMap/
 
 import re
 import os
@@ -9,7 +9,38 @@ import tkinter as tk
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
+from tkinter import filedialog
 
+class Application(tk.Frame):
+    def __init__(self, master=None):
+        super().__init__(master)
+        self.master = master
+        self.master.geometry("500x700+200+200")
+        self.create_widgets()
+
+    def create_widgets(self):
+        menubar = tk.Menu(self.master)
+        filemenu = tk.Menu(menubar, tearoff=0)
+        filemenu.add_command(label="Open", command=self.open_file)
+        filemenu.add_separator()
+        filemenu.add_command(label="Exit", command=self.master.quit)
+        menubar.add_cascade(label="File", menu=filemenu)
+        helpmenu = tk.Menu(menubar, tearoff=0)
+        helpmenu.add_command(label="About", command=self.about)
+        menubar.add_cascade(label="Help", menu=helpmenu)
+        self.master.config(menu=menubar)
+
+    def open_file(self):
+        # open file dialog
+        file_path = filedialog.askopenfilename()
+
+        # display file contents
+        with open(file_path, 'r') as f:
+            file_contents = f.read()
+        os.system(f"cat '{file_path}'")
+
+    def about(self):
+        messagebox.showinfo("About KMap", "KMap Version 0.9.\n\nKMap 0.9 Provides a graphical user interface solution for running nmap scans \n\nAuthor: kaotickj\n\nWebsite: https://github.com/kaotickj/KMap/")
 
 def validate_ip_address(ip_address):
     # Validate input as IP address or hostname
@@ -19,6 +50,47 @@ def validate_ip_address(ip_address):
     else:
         return False
 
+class ToolTip:
+    def __init__(self, widget, text):
+        self.widget = widget
+        self.text = text
+        self.tip = None
+        self.id = None
+        self.x = self.y = 0
+        
+    def showtip(self):
+        "Display the tooltip"
+        self.tip = tk.Toplevel(self.widget)
+        self.tip.attributes('-topmost', True)
+        self.tip.overrideredirect(True)
+        self.tip.withdraw()
+        label = ttk.Label(self.tip, text=self.text, justify=tk.LEFT,
+                      background="#ffffe0", relief=tk.SOLID, borderwidth=1,
+                      font=("tahoma", "11", "normal"))
+        label.pack(ipadx=1)
+        self.tip.update_idletasks()
+        self.tipwidth = self.tip.winfo_reqwidth()
+        self.tipheight = self.tip.winfo_reqheight()
+        self.x = self.widget.winfo_rootx() + self.widget.winfo_width()
+        self.y = self.widget.winfo_rooty() + self.widget.winfo_height()
+        self.tip.geometry("+{}+{}".format(self.x, self.y))
+        self.tip.deiconify()
+        
+    def hidetip(self):
+        "Hide the tooltip"
+        if self.tip:
+            self.tip.withdraw()
+            self.tip.destroy()
+            self.tip = None
+
+def create_tooltip(widget, text):
+    tip = ToolTip(widget, text)
+    def enter(event):
+        tip.showtip()
+    def leave(event):
+        tip.hidetip()
+    widget.bind('<Enter>', enter)
+    widget.bind('<Leave>', leave)
 
 def start_scan():
     ip_address = ip_address_entry.get()
@@ -46,7 +118,13 @@ def start_scan():
 
 
 root = tk.Tk()
-root.title("KMap v 0.8")
+root.title("KMap v 0.9")
+root.rowconfigure(0, weight = 1)
+root.rowconfigure(1, weight = 3)
+root.columnconfigure(0, weight = 1)
+root.columnconfigure(1, weight = 3)
+app = Application(master=root)
+
 logo_file = "alien.png"
 if os.path.exists(logo_file):
     logo = PhotoImage(file=logo_file)
@@ -64,7 +142,7 @@ options_frame = ttk.LabelFrame(root, text="Scan Options")
 options_frame.grid(column=0, row=1, columnspan=2, padx=5, pady=5)
 
 # Set up the verbosity options
-verbosity_choice = tk.StringVar(value="-v")
+verbosity_choice = tk.StringVar(value="")
 verbosity_options = [
     {"text": "Normal Output", "value": ""},
     {"text": "Verbose Output", "value": "-v"},
@@ -104,7 +182,7 @@ nmap_script_options = [
     {"text": "Default scripts (default)", "value": "--script default"},
     {"text": "Exploit detection (exploit)", "value": "--script exploit"},
     {"text": "Vulnerability detection (vuln)", "value": "--script vuln"},
-    {"text": "All scripts (all)", "value": "--script all"}
+    {"text": "All scripts (all) (* Very Slow)", "value": "--script all"}
 ]
 # Create a frame to group the script options
 nmap_script_options_frame = ttk.LabelFrame(options_frame, text="Script Options")
@@ -133,16 +211,13 @@ for i, option in enumerate(timing_option_options):
                     value=option["value"]).grid(column=4, row=i, sticky="W", padx=5, pady=2)
 
 # Set up the port options radio buttons
-port_options_label = ttk.Label(root, text="Port Options")
-port_options_label.grid(column=0, row=0, padx=5, pady=5)
-
 port_option_choice = tk.StringVar(value="")
 port_option_options = [
     {"text": "Default", "value": ""},
     {"text": "Top 20", "value": "--top-ports 20"},
     {"text": "Top 100", "value": "--top-ports 100"},
     {"text": "Top 1000", "value": "--top-ports 1000"},
-    {"text": "All Ports (* Very Slow)", "value": "-p-"},
+    {"text": "All Ports (* Very Slow)", "value": "-p-"}
 ]
 # Create a frame to group the port options
 port_option_frame = ttk.LabelFrame(options_frame, text="Port Options")
@@ -156,26 +231,28 @@ for i, option in enumerate(port_option_options):
 param_option_frame = ttk.LabelFrame(options_frame, text="Additional Parameters")
 param_option_frame.grid(column=1, row=3, padx=5, pady=5)
 
-port_option_range = ttk.Label(param_option_frame, text="Specific Port or Range - Only if\nyou didn't set a Port Option")
-port_option_range.grid(column=0, row=0, sticky="W", padx=5, pady=2)
+port_option_range = ttk.Label(param_option_frame, text="Specific Port, Ports, or Range\n (i.e., '22', '21,22,23', or '21-25')")
+port_option_range.grid(column=0, row=0, padx=5, pady=2)
 port_option_range_entry = ttk.Entry(param_option_frame)
-port_option_range_entry.grid(column=0, row=1, sticky="W", padx=5, pady=5)
+create_tooltip(port_option_range_entry, "Note: Setting this Overrides Port Options")
+port_option_range_entry.grid(column=0, row=1, padx=5, pady=5)
 port_option_range_choice = "-p "
 
 addt_args = ttk.Label(param_option_frame, text="Additional Arguments")
-addt_args.grid(column=0, row=2, sticky="W", padx=5, pady=2)
+addt_args.grid(column=0, row=2, padx=5, pady=2)
 addt_args_entry = ttk.Entry(param_option_frame)
-addt_args_entry.grid(column=0, row=3, sticky="W", padx=5, pady=5)
+create_tooltip(addt_args_entry, "For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments")
+addt_args_entry.grid(column=0, row=3, padx=5, pady=5)
 
 # Set up the Aggressive scan options Checkbutton
 is_aggressive_scan = tk.BooleanVar()
 aggressive_scan_options_checkbutton = ttk.Checkbutton(root,
-                                                      text="Enable aggressive service and OS detection options (-A -O)",
+                                                      text="Enable Aggressive Scan for service and OS detection (-A -O)",
                                                       variable=is_aggressive_scan)
 aggressive_scan_options_checkbutton.grid(column=0, row=3, columnspan=2, padx=5, pady=5)
-
+create_tooltip(aggressive_scan_options_checkbutton , "             	   ** PLEASE NOTE: **\nAggressive Scan is VERY slow and intrusive.**")
 # Add a button to start the scan
 start_button = ttk.Button(root, text="Start Scan", command=start_scan)
-start_button.grid(column=0, row=4, columnspan=2, padx=5, pady=5)
+start_button.grid(column=0, row=5, columnspan=2, padx=5, pady=5)
 
 root.mainloop()
