@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Script: KMap v 0.9
+# Script: KMap v 1.0
 # Author: kaotickj
 # Website: https://github.com/kaotickj/KMap/
 
@@ -10,12 +10,47 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
+import webbrowser
+
+version="1.0"
+class AboutDialog(tk.Toplevel):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.title("About KMap")
+        self.resizable(False, False)
+        self.geometry("400x300+240+240")
+
+        # create widgets
+        label_version = tk.Label(self, text=f"KMap Version {version}", font=("TkDefaultFont", 12, "bold"))
+        label_version.pack(pady=10)
+
+        label_description = tk.Label(self, text=f"KMap {version} provides a graphical user interface\n solution for running nmap scans in Linux.", justify="center")
+        label_description.pack(pady=10)
+
+        label_author = tk.Label(self, text="Author: kaotickj", font=("TkDefaultFont", 10))
+        label_author.pack()
+
+        label_github = tk.Label(self, text="GitHub: https://github.com/kaotickj/KMap/", font=("TkDefaultFont", 10), fg="blue", cursor="hand2")
+        label_github.pack(pady=10)
+        label_github.bind("<Button-1>", self.on_github_clicked)
+
+        label_license_header =tk.Label(self, text="License: GNU/GPL3.0:")
+        label_license_header.pack()
+        label_license_github = tk.Label(self, text="https://github.com/kaotickj/KMap/blob/main/LICENSE", font=("TkDefaultFont", 10), fg="blue", cursor="hand2")
+        label_license_github.pack(pady=10)
+        label_license_github.bind("<Button-1>", self.on_license_github_clicked)
+
+    def on_github_clicked(self, event):
+        webbrowser.open_new("https://github.com/kaotickj/KMap/")
+        
+    def on_license_github_clicked(self, event):
+        webbrowser.open_new("https://github.com/kaotickj/KMap/blob/main/LICENSE")
 
 class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.master.geometry("500x700+200+200")
+        self.master.geometry("940x700+200+200")
         self.create_widgets()
 
     def create_widgets(self):
@@ -40,7 +75,8 @@ class Application(tk.Frame):
         os.system(f"cat '{file_path}'")
 
     def about(self):
-        messagebox.showinfo("About KMap", "KMap Version 0.9.\n\nKMap 0.9 Provides a graphical user interface solution for running nmap scans \n\nAuthor: kaotickj\n\nWebsite: https://github.com/kaotickj/KMap/")
+        dialog = AboutDialog(self.master)
+#        dialog.show()
 
 def validate_ip_address(ip_address):
     # Validate input as IP address or hostname
@@ -50,6 +86,7 @@ def validate_ip_address(ip_address):
     else:
         return False
 
+
 class ToolTip:
     def __init__(self, widget, text):
         self.widget = widget
@@ -57,7 +94,7 @@ class ToolTip:
         self.tip = None
         self.id = None
         self.x = self.y = 0
-        
+
     def showtip(self):
         "Display the tooltip"
         self.tip = tk.Toplevel(self.widget)
@@ -65,8 +102,8 @@ class ToolTip:
         self.tip.overrideredirect(True)
         self.tip.withdraw()
         label = ttk.Label(self.tip, text=self.text, justify=tk.LEFT,
-                      background="#ffffe0", relief=tk.SOLID, borderwidth=1,
-                      font=("tahoma", "11", "normal"))
+                          background="#ffffe0", relief=tk.SOLID, borderwidth=1,
+                          font=("tahoma", "11", "normal"))
         label.pack(ipadx=1)
         self.tip.update_idletasks()
         self.tipwidth = self.tip.winfo_reqwidth()
@@ -75,7 +112,7 @@ class ToolTip:
         self.y = self.widget.winfo_rooty() + self.widget.winfo_height()
         self.tip.geometry("+{}+{}".format(self.x, self.y))
         self.tip.deiconify()
-        
+
     def hidetip(self):
         "Hide the tooltip"
         if self.tip:
@@ -83,14 +120,19 @@ class ToolTip:
             self.tip.destroy()
             self.tip = None
 
+
 def create_tooltip(widget, text):
     tip = ToolTip(widget, text)
+
     def enter(event):
         tip.showtip()
+
     def leave(event):
         tip.hidetip()
+
     widget.bind('<Enter>', enter)
     widget.bind('<Leave>', leave)
+
 
 def start_scan():
     ip_address = ip_address_entry.get()
@@ -105,24 +147,32 @@ def start_scan():
     port_option_range = port_option_range_choice + port_option_range_entry.get()
     if not port_option_range_entry.get():
         port_option_range = ""
-    addt_args = addt_args_entry.get() 
+    addt_args = addt_args_entry.get()
     if not validate_ip_address(ip_address):
         messagebox.showerror("Error", f"Input, \"{ip_address}\" is not a valid IP address or hostname")
         return
 
     command = f"sudo nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oA kmapscan_results"
-    print(f"{command}")
+#    print(f"{command}")
+    text.insert("end", "Scan Started.  Please wait...\n\n")
+    text.update()
+    process = os.popen(command)  # Run nmap command using os.popen
+    output = process.read()  # Read the output of nmap command
+    process.close()  # Close the nmap process
+    text.insert("end", output)  # Insert the output into the Text widget
 
-    os.system(command)
+#    os.system(command)
     messagebox.showinfo("Scan Complete", "Scan has completed. Output saved to kmapscan_results.{gnmap}{nmap}{xml}")
 
 
 root = tk.Tk()
-root.title("KMap v 0.9")
-root.rowconfigure(0, weight = 1)
-root.rowconfigure(1, weight = 3)
-root.columnconfigure(0, weight = 1)
-root.columnconfigure(1, weight = 3)
+root.title(f"KMap v {version}")
+root.rowconfigure(0, weight=1)
+root.rowconfigure(1, weight=3)
+root.columnconfigure(0, weight=1)
+root.columnconfigure(1, weight=3)
+root.resizable(False, False)
+
 app = Application(master=root)
 
 logo_file = "alien.png"
@@ -132,7 +182,7 @@ if os.path.exists(logo_file):
 
 # Set up the IP address entry field
 ip_address_label = ttk.Label(root, text="IP address or hostname to scan:")
-ip_address_label.grid(column=0, row=0, padx=5, pady=5)
+ip_address_label.grid(column=1, row=0, sticky="W", padx=5, pady=5)
 ip_address_entry = ttk.Entry(root)
 ip_address_entry.insert(0, "scanme.org")
 ip_address_entry.grid(column=1, row=0, padx=5, pady=5)
@@ -153,7 +203,8 @@ verbosity_options_frame = ttk.LabelFrame(options_frame, text="Verbosity Options"
 verbosity_options_frame.grid(column=0, row=0, padx=5, pady=5)
 # Add a label and radiobutton for each verbosity option
 for i, option in enumerate(verbosity_options):
-    ttk.Radiobutton(verbosity_options_frame, text=option["text"], variable=verbosity_choice, value=option["value"]).grid(
+    ttk.Radiobutton(verbosity_options_frame, text=option["text"], variable=verbosity_choice,
+                    value=option["value"]).grid(
         column=0, row=i, sticky="W", padx=5, pady=2)
 
 # Set up the scan type radio buttons
@@ -231,7 +282,8 @@ for i, option in enumerate(port_option_options):
 param_option_frame = ttk.LabelFrame(options_frame, text="Additional Parameters")
 param_option_frame.grid(column=1, row=3, padx=5, pady=5)
 
-port_option_range = ttk.Label(param_option_frame, text="Specific Port, Ports, or Range\n (i.e., '22', '21,22,23', or '21-25')")
+port_option_range = ttk.Label(param_option_frame,
+                              text="Specific Port, Ports, or Range\n (i.e., '22', '21,22,23', or '21-25')")
 port_option_range.grid(column=0, row=0, padx=5, pady=2)
 port_option_range_entry = ttk.Entry(param_option_frame)
 create_tooltip(port_option_range_entry, "Note: Setting this Overrides Port Options")
@@ -241,7 +293,8 @@ port_option_range_choice = "-p "
 addt_args = ttk.Label(param_option_frame, text="Additional Arguments")
 addt_args.grid(column=0, row=2, padx=5, pady=2)
 addt_args_entry = ttk.Entry(param_option_frame)
-create_tooltip(addt_args_entry, "For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments")
+create_tooltip(addt_args_entry,
+               "For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments")
 addt_args_entry.grid(column=0, row=3, padx=5, pady=5)
 
 # Set up the Aggressive scan options Checkbutton
@@ -250,9 +303,18 @@ aggressive_scan_options_checkbutton = ttk.Checkbutton(root,
                                                       text="Enable Aggressive Scan for service and OS detection (-A -O)",
                                                       variable=is_aggressive_scan)
 aggressive_scan_options_checkbutton.grid(column=0, row=3, columnspan=2, padx=5, pady=5)
-create_tooltip(aggressive_scan_options_checkbutton , "             	   ** PLEASE NOTE: **\nAggressive Scan is VERY slow and intrusive.**")
+create_tooltip(aggressive_scan_options_checkbutton,
+               "             	   ** PLEASE NOTE: **\nAggressive Scan is VERY slow and intrusive.**")
+
+# Output to text widget
+text_label = ttk.LabelFrame(options_frame, text="Output:")
+text_label.grid(column=2, row=0, padx=5, pady=5)
+text = Text(options_frame, width=60, height=30)
+text.grid(column=2, row=0, rowspan=4, sticky="e", padx=5, pady=5)
+
 # Add a button to start the scan
 start_button = ttk.Button(root, text="Start Scan", command=start_scan)
 start_button.grid(column=0, row=5, columnspan=2, padx=5, pady=5)
+
 
 root.mainloop()
