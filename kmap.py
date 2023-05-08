@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-# Script: KMap v 1.0
+# Script: KMap v 1.0.1
 # Author: kaotickj
 # Website: https://github.com/kaotickj/KMap/
 
@@ -12,7 +12,34 @@ from tkinter import messagebox
 from tkinter import filedialog
 import webbrowser
 
-version="1.0"
+version = "1.0.1"
+
+
+def validate_port_input(input_string):
+    """
+    Validates the input string for port specification in nmap scan.
+    Acceptable input formats are:
+    - Specific port: '22'
+    - Multiple ports: '21,22,23'
+    - Port range: '21-25'
+    """
+    # Check for specific port
+    if re.match('^\d{1,5}$', input_string):
+        return True
+
+    # Check for multiple ports separated by comma
+    elif re.match('^\d{1,5}(,\d{1,5})+$', input_string):
+        return True
+
+    # Check for port range
+    elif re.match('^\d{1,5}-\d{1,5}$', input_string):
+        return True
+
+    # Invalid input format
+    else:
+        return False
+
+
 class AboutDialog(tk.Toplevel):
     def __init__(self, parent):
         super().__init__(parent)
@@ -24,27 +51,33 @@ class AboutDialog(tk.Toplevel):
         label_version = tk.Label(self, text=f"KMap Version {version}", font=("TkDefaultFont", 12, "bold"))
         label_version.pack(pady=10)
 
-        label_description = tk.Label(self, text=f"KMap {version} provides a graphical user interface\n solution for running nmap scans in Linux.", justify="center")
+        label_description = tk.Label(self,
+                                     text=f"KMap {version} provides a graphical user interface\n solution for running "
+                                          f"nmap scans in Linux.",
+                                     justify="center")
         label_description.pack(pady=10)
 
         label_author = tk.Label(self, text="Author: kaotickj", font=("TkDefaultFont", 10))
         label_author.pack()
 
-        label_github = tk.Label(self, text="GitHub: https://github.com/kaotickj/KMap/", font=("TkDefaultFont", 10), fg="blue", cursor="hand2")
+        label_github = tk.Label(self, text="GitHub: https://github.com/kaotickj/KMap/", font=("TkDefaultFont", 10),
+                                fg="blue", cursor="hand2")
         label_github.pack(pady=10)
         label_github.bind("<Button-1>", self.on_github_clicked)
 
-        label_license_header =tk.Label(self, text="License: GNU/GPL3.0:")
+        label_license_header = tk.Label(self, text="License: GNU/GPL3.0:")
         label_license_header.pack()
-        label_license_github = tk.Label(self, text="https://github.com/kaotickj/KMap/blob/main/LICENSE", font=("TkDefaultFont", 10), fg="blue", cursor="hand2")
+        label_license_github = tk.Label(self, text="https://github.com/kaotickj/KMap/blob/main/LICENSE",
+                                        font=("TkDefaultFont", 10), fg="blue", cursor="hand2")
         label_license_github.pack(pady=10)
         label_license_github.bind("<Button-1>", self.on_license_github_clicked)
 
     def on_github_clicked(self, event):
         webbrowser.open_new("https://github.com/kaotickj/KMap/")
-        
+
     def on_license_github_clicked(self, event):
         webbrowser.open_new("https://github.com/kaotickj/KMap/blob/main/LICENSE")
+
 
 class Application(tk.Frame):
     def __init__(self, master=None):
@@ -67,20 +100,26 @@ class Application(tk.Frame):
 
     def open_file(self):
         # open file dialog
-        file_path = filedialog.askopenfilename()
+#        file_path = filedialog.askopenfilename()
+        file_path = filedialog.askopenfilename(filetypes=[("Nmap Files", "*.nmap")])
 
         # display file contents
         with open(file_path, 'r') as f:
             file_contents = f.read()
-        os.system(f"cat '{file_path}'")
+
+        text.delete("1.0", "end")
+        text.insert("end", f"{file_contents}", ('margin',))
+#        os.system(f"cat '{file_path}'")
 
     def about(self):
         dialog = AboutDialog(self.master)
+
+
 #        dialog.show()
 
 def validate_ip_address(ip_address):
     # Validate input as IP address or hostname
-    if re.match('^([0-9]{1,3}\.){3}[0-9]{1,3}$', ip_address) or re.match(
+    if re.match('^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$', ip_address) or re.match(
             '^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.[a-zA-Z]{2,}$', ip_address):
         return True
     else:
@@ -142,27 +181,35 @@ def start_scan():
     nmap_script_option = nmap_script_options_choice.get()
     aggressive_scan_options = "-A -O" if is_aggressive_scan.get() else ""
     port_option = port_option_choice.get()
-    if not port_option_choice.get():
-        port_option = ""
-    port_option_range = port_option_range_choice + port_option_range_entry.get()
-    if not port_option_range_entry.get():
+    port_option_range = port_option_range_entry.get()
+    if port_option_range_entry.get():
+        if validate_port_input(port_option_range):
+            port_option_range = port_option_range_choice + port_option_range_entry.get()
+        else:   
+            messagebox.showerror("Error",
+                                 f"Not a valid entry, \"{port_option_range}\". Please enter a valid port, range of ports "
+                                 f"or comma separated list of ports.")
+            return
+    else:    
         port_option_range = ""
     addt_args = addt_args_entry.get()
     if not validate_ip_address(ip_address):
-        messagebox.showerror("Error", f"Input, \"{ip_address}\" is not a valid IP address or hostname")
+        messagebox.showerror("Error", f"Not a valid entry, \"{ip_address}\". Please enter a valid ip address or "
+                                      f"domain to scan.")
         return
 
-    command = f"sudo nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oA kmapscan_results"
-#    print(f"{command}")
-    text.insert("end", "Scan Started.  Please wait...\n\n")
+    command = f"sudo nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oN kmapscan_results.nmap"
+    #    print(f"{command}")
+    text.delete("1.0", "end")
+    text.insert("end", f"Command: {command}\n\nScan Started.  Please wait...\n\n", ('margin',))
     text.update()
     process = os.popen(command)  # Run nmap command using os.popen
     output = process.read()  # Read the output of nmap command
     process.close()  # Close the nmap process
-    text.insert("end", output)  # Insert the output into the Text widget
+    text.insert("end", output, ('margin',))  # Insert the output into the Text widget
 
-#    os.system(command)
-    messagebox.showinfo("Scan Complete", "Scan has completed. Output saved to kmapscan_results.{gnmap}{nmap}{xml}")
+    #    os.system(command)
+    messagebox.showinfo("Scan Complete", "Scan has completed. Output saved to kmapscan_results.nmap")
 
 
 root = tk.Tk()
@@ -184,7 +231,7 @@ if os.path.exists(logo_file):
 ip_address_label = ttk.Label(root, text="IP address or hostname to scan:")
 ip_address_label.grid(column=1, row=0, sticky="W", padx=5, pady=5)
 ip_address_entry = ttk.Entry(root)
-ip_address_entry.insert(0, "scanme.org")
+#ip_address_entry.insert(0, "scanme.org")
 ip_address_entry.grid(column=1, row=0, padx=5, pady=5)
 
 # Set up the options frame
@@ -294,7 +341,7 @@ addt_args = ttk.Label(param_option_frame, text="Additional Arguments")
 addt_args.grid(column=0, row=2, padx=5, pady=2)
 addt_args_entry = ttk.Entry(param_option_frame)
 create_tooltip(addt_args_entry,
-               "For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments")
+               " For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments. Use \"-h\" \n for nmap help")
 addt_args_entry.grid(column=0, row=3, padx=5, pady=5)
 
 # Set up the Aggressive scan options Checkbutton
@@ -304,17 +351,17 @@ aggressive_scan_options_checkbutton = ttk.Checkbutton(root,
                                                       variable=is_aggressive_scan)
 aggressive_scan_options_checkbutton.grid(column=0, row=3, columnspan=2, padx=5, pady=5)
 create_tooltip(aggressive_scan_options_checkbutton,
-               "             	   ** PLEASE NOTE: **\nAggressive Scan is VERY slow and intrusive.**")
+               "             	   ** PLEASE NOTE: **\n Aggressive Scan is VERY slow and intrusive.")
 
-# Output to text widget
+# Output text widget
 text_label = ttk.LabelFrame(options_frame, text="Output:")
-text_label.grid(column=2, row=0, padx=5, pady=5)
+text_label.grid(column=2, row=0, padx=5, pady=5, ipadx=5, ipady=5)
 text = Text(options_frame, width=60, height=30)
+text.tag_configure('margin', lmargin1=10, lmargin2=10, rmargin=10, spacing1=0)
 text.grid(column=2, row=0, rowspan=4, sticky="e", padx=5, pady=5)
 
 # Add a button to start the scan
 start_button = ttk.Button(root, text="Start Scan", command=start_scan)
-start_button.grid(column=0, row=5, columnspan=2, padx=5, pady=5)
-
+start_button.grid(column=0, row=4, columnspan=2, padx=5, pady=5)
 
 root.mainloop()
