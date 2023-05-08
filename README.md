@@ -6,7 +6,7 @@ KMap is a user friendly tool for running various types of nmap scans allowing us
     ```
     sudo apt install nmap
     ```
-- Also check the import statements to assure that you have all of the required modules installed.  Most of the modules used are standard python libraries.    
+- If you're using the Python version, check the import statements to assure that you have all of the required modules installed.  Most of the modules used are standard python libraries.    
 
 ![Python GUI Version](https://img.shields.io/badge/Python-GUI-green.svg)
 
