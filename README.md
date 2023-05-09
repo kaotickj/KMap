@@ -24,7 +24,7 @@ python3 kmap.py
 
 - Enter an ip address or domain to scan in the input labelled, "IP address or hostname to scan:"
 - Choose a verbosity option or leave it at the default setting
-- If you want to save nmap's output to a file, select the "Save nmap's output" checkbox and entire a filename to save it as.  *** Please note that if you want to later load the scan results into KMap, you should save it with a .nmap extension.
+- If you want to save nmap's output to a file, select the "Save nmap's output" checkbox and enter a filename to save it as.  *** Please note that if you want to later load the scan results into KMap, you should save it with a .nmap extension.
 - Choose a script option, or leave the default no scripts setting
 - Choose a scan type.  Default is TCP SYN scan (-sS)
 - Set a timing option, or leave the default timing as is
