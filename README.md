@@ -28,7 +28,7 @@ python3 kmap.py
 - Choose a script option, or leave the default no scripts setting
 - Choose a scan type.  Default is TCP SYN scan (-sS)
 - Set a timing option, or leave the default timing as is
-- Select a port option to configure ports to scan or leave it set at default
+- Select a port option to configure ports to scan or leave it as is. Nmap's default scan uses it's top 1000 ports definition.
 - Choose specific port or port range options by entering them into the input field as a single port (i.e., "22"), a comma separated list of ports (i.e., "21,22,23,25"), or a range of ports (i.e., "21-25"). ### NOTE: Setting this overrides the previous port options setting 
 - Add any additional arguments such as Service scan: -sV, no ping: -Pn, or other scan types in addition to the chosen scan type.  Accepts any valid nmap commands.  Use -h here for nmap's help
 - For aggressive service and OS detection, check the box
