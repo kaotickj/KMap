@@ -198,6 +198,12 @@ def start_scan():
     else:
         aggressive_scan_options = ""
         aggressive_notice = ""
+    saving_scan = save_scan.get()
+    if saving_scan:
+        out_file = output_entry.get()
+        save_option = f"-oN {out_file}"
+    else:
+        save_option = ""
     port_option = port_option_choice.get()
     port_option_range = port_option_range_entry.get()
     if port_option_range_entry.get():
@@ -216,7 +222,7 @@ def start_scan():
                                       f"domain to scan.")
         return
 
-    command = f"nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oN kmapscan_results.nmap"
+    command = f"nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {save_option} {ip_address}"
     #    print(f"{command}")
     text.config(state="normal")
     text.delete("1.0", "end")
@@ -229,7 +235,11 @@ def start_scan():
     text.config(state="disabled")
 
     #    os.system(command)
-    messagebox.showinfo("Scan Complete", "Scan has completed. Output saved to kmapscan_results.nmap")
+    if save_scan.get():
+        save_note = f"Output saved to {out_file}"
+    else:
+        save_note = ""
+    messagebox.showinfo("Scan Complete", f"Scan has completed. {save_note} ")
 
 
 root = tk.Tk()
@@ -266,13 +276,24 @@ verbosity_options = [
     {"text": "Very Verbose Output", "value": "-vv"}
 ]
 # Create a frame to group the verbosity options
-verbosity_options_frame = ttk.LabelFrame(options_frame, text="Verbosity Options")
+verbosity_options_frame = ttk.LabelFrame(options_frame, text="Output Options")
 verbosity_options_frame.grid(column=0, row=0, padx=5, pady=5)
 # Add a label and radiobutton for each verbosity option
 for i, option in enumerate(verbosity_options):
     ttk.Radiobutton(verbosity_options_frame, text=option["text"], variable=verbosity_choice,
                     value=option["value"]).grid(
         column=0, row=i, sticky="W", padx=5, pady=2)
+# set up scan save options
+# Set up the Save scan Checkbutton
+save_scan = tk.BooleanVar()
+save_scan_checkbutton = ttk.Checkbutton(verbosity_options_frame,
+                                        text=" Save nmap's output?",
+                                        variable=save_scan)
+save_scan_checkbutton.grid(column=0, row=4, columnspan=2, padx=5, pady=2)
+output_label = tk.Label(verbosity_options_frame, text="Output filename :")
+output_entry = tk.Entry(verbosity_options_frame)
+output_label.grid(column=0, row=5, padx=5, pady=2)
+output_entry.grid(column=0, row=6, padx=5, pady=2)
 
 # Set up the scan type radio buttons
 scan_type_choice = tk.StringVar(value="")
