@@ -1,18 +1,26 @@
 #!/usr/bin/env python3
-# Script: KMap v 1.0.1
+# Script: KMap v 1.0.2
 # Author: kaotickj
 # Website: https://github.com/kaotickj/KMap/
 
 import re
 import os
 import tkinter as tk
+import webbrowser
 from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkinter import filedialog
-import webbrowser
 
-version = "1.0.1"
+version = "1.0.2"
+
+if os.geteuid() != 0:
+    import sys
+
+    print(
+        "Because many nmap scan options require root permissions, this script must be run as root. Please run with "
+        "'sudo python3 kmap.py'.")
+    sys.exit(1)
 
 
 def validate_port_input(input_string):
@@ -83,7 +91,7 @@ class Application(tk.Frame):
     def __init__(self, master=None):
         super().__init__(master)
         self.master = master
-        self.master.geometry("940x700+200+200")
+        self.master.geometry("960x780+100+100")
         self.create_widgets()
 
     def create_widgets(self):
@@ -100,16 +108,18 @@ class Application(tk.Frame):
 
     def open_file(self):
         # open file dialog
-#        file_path = filedialog.askopenfilename()
+        #        file_path = filedialog.askopenfilename()
         file_path = filedialog.askopenfilename(filetypes=[("Nmap Files", "*.nmap")])
 
         # display file contents
         with open(file_path, 'r') as f:
             file_contents = f.read()
 
+        text.config(state="normal")
         text.delete("1.0", "end")
         text.insert("end", f"{file_contents}", ('margin',))
-#        os.system(f"cat '{file_path}'")
+        #        os.system(f"cat '{file_path}'")
+        text.config(state="disabled")
 
     def about(self):
         dialog = AboutDialog(self.master)
@@ -119,7 +129,9 @@ class Application(tk.Frame):
 
 def validate_ip_address(ip_address):
     # Validate input as IP address or hostname
-    if re.match('^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$', ip_address) or re.match(
+    if re.match(
+            '^(([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])\.){3}([01]?[0-9]{1,2}|2[0-4][0-9]|25[0-5])(\/([0-9]|[1-2][0-9]|3[0-2]))?$',
+            ip_address) or re.match(
             '^([a-zA-Z0-9]|[a-zA-Z0-9][a-zA-Z0-9\-]*[a-zA-Z0-9])\.[a-zA-Z]{2,}$', ip_address):
         return True
     else:
@@ -179,18 +191,24 @@ def start_scan():
     scan_type = scan_type_choice.get()
     timing_option = timing_option_choice.get()
     nmap_script_option = nmap_script_options_choice.get()
-    aggressive_scan_options = "-A -O" if is_aggressive_scan.get() else ""
+    is_aggressive = is_aggressive_scan.get()
+    if is_aggressive:
+        aggressive_scan_options = "-A -O"
+        aggressive_notice = f"** NOTICE:\nAggressive service and OS Detection Enabled: This WILL take a long time.\n\n"
+    else:
+        aggressive_scan_options = ""
+        aggressive_notice = ""
     port_option = port_option_choice.get()
     port_option_range = port_option_range_entry.get()
     if port_option_range_entry.get():
         if validate_port_input(port_option_range):
             port_option_range = port_option_range_choice + port_option_range_entry.get()
-        else:   
+        else:
             messagebox.showerror("Error",
-                                 f"Not a valid entry, \"{port_option_range}\". Please enter a valid port, range of ports "
-                                 f"or comma separated list of ports.")
+                                 f"Not a valid entry, \"{port_option_range}\". Please enter a valid port, range of "
+                                 f"ports or comma separated list of ports.")
             return
-    else:    
+    else:
         port_option_range = ""
     addt_args = addt_args_entry.get()
     if not validate_ip_address(ip_address):
@@ -198,15 +216,17 @@ def start_scan():
                                       f"domain to scan.")
         return
 
-    command = f"sudo nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oN kmapscan_results.nmap"
+    command = f"nmap {verbosity} {scan_type} {addt_args} {timing_option} {port_option} {port_option_range} {nmap_script_option} {aggressive_scan_options} {ip_address} -oN kmapscan_results.nmap"
     #    print(f"{command}")
+    text.config(state="normal")
     text.delete("1.0", "end")
-    text.insert("end", f"Command: {command}\n\nScan Started.  Please wait...\n\n", ('margin',))
+    text.insert("end", f"Command: {command}\n\n{aggressive_notice}Scan Started.  Please wait...\n\n", ('margin',))
     text.update()
     process = os.popen(command)  # Run nmap command using os.popen
     output = process.read()  # Read the output of nmap command
     process.close()  # Close the nmap process
     text.insert("end", output, ('margin',))  # Insert the output into the Text widget
+    text.config(state="disabled")
 
     #    os.system(command)
     messagebox.showinfo("Scan Complete", "Scan has completed. Output saved to kmapscan_results.nmap")
@@ -218,7 +238,7 @@ root.rowconfigure(0, weight=1)
 root.rowconfigure(1, weight=3)
 root.columnconfigure(0, weight=1)
 root.columnconfigure(1, weight=3)
-root.resizable(False, False)
+# root.resizable(False, False)
 
 app = Application(master=root)
 
@@ -231,7 +251,7 @@ if os.path.exists(logo_file):
 ip_address_label = ttk.Label(root, text="IP address or hostname to scan:")
 ip_address_label.grid(column=1, row=0, sticky="W", padx=5, pady=5)
 ip_address_entry = ttk.Entry(root)
-#ip_address_entry.insert(0, "scanme.org")
+# ip_address_entry.insert(0, "scanme.org")
 ip_address_entry.grid(column=1, row=0, padx=5, pady=5)
 
 # Set up the options frame
@@ -255,14 +275,18 @@ for i, option in enumerate(verbosity_options):
         column=0, row=i, sticky="W", padx=5, pady=2)
 
 # Set up the scan type radio buttons
-scan_type_choice = tk.StringVar(value="-sS")
+scan_type_choice = tk.StringVar(value="")
 scan_type_options = [
-    {"text": "TCP SYN scan (-sS)", "value": "-sS"},
-    {"text": "TCP connect scan (-sT)", "value": "-sT"},
-    {"text": "UDP scan (-sU)", "value": "-sU"},
-    {"text": "TCP NULL scan (-sN)", "value": "-sN"},
-    {"text": "TCP FIN scan (-sF)", "value": "-sF"},
-    {"text": "TCP Xmas scan (-sX)", "value": "-sX"}
+    {"text": "Default", "value": ""},
+    {"text": "TCP NULL scan", "value": "-sN"},
+    {"text": "TCP SYN scan", "value": "-sS"},
+    {"text": "TCP ACK scan", "value": "-sA"},
+    {"text": "TCP FIN scan", "value": "-sF"},
+    {"text": "TCP connect scan", "value": "-sT"},
+    {"text": "TCP MAIMON scan", "value": "-sM"},
+    {"text": "TCP WINDOW scan    ", "value": "-sW"},
+    {"text": "TCP Xmas scan", "value": "-sX"},
+    {"text": "UDP scan", "value": "-sU"}
 ]
 # Create a frame to group the scan type options
 scan_type_frame = ttk.LabelFrame(options_frame, text="Scan Types")
@@ -277,14 +301,18 @@ nmap_script_options_choice = tk.StringVar(value="")  # default value is empty
 nmap_script_options = [
     {"text": "No scripts", "value": ""},
     {"text": "Authentication scripts (auth)", "value": "--script auth"},
+    {"text": "Broadcast (broadcast)", "value": "--script broadcast"},
+    {"text": "Bruteforce scripts (brute)", "value": "--script brute"},
     {"text": "Default scripts (default)", "value": "--script default"},
     {"text": "Exploit detection (exploit)", "value": "--script exploit"},
+    {"text": "Malware scripts (malware)", "value": "--script malware"},
+    {"text": "Safe scripts (safe)", "value": "--script safe"},
     {"text": "Vulnerability detection (vuln)", "value": "--script vuln"},
     {"text": "All scripts (all) (* Very Slow)", "value": "--script all"}
 ]
 # Create a frame to group the script options
 nmap_script_options_frame = ttk.LabelFrame(options_frame, text="Script Options")
-nmap_script_options_frame.grid(column=1, row=0, padx=5, pady=5)
+nmap_script_options_frame.grid(column=1, row=1, padx=5, pady=5)
 # Add a label and radiobutton for each script option
 for i, option in enumerate(nmap_script_options):
     ttk.Radiobutton(nmap_script_options_frame, text=option["text"], variable=nmap_script_options_choice,
@@ -302,7 +330,7 @@ timing_option_options = [
 ]
 # Create a frame to group the timing options
 timing_option_frame = ttk.LabelFrame(options_frame, text="Timing Options")
-timing_option_frame.grid(column=1, row=1, padx=5, pady=5)
+timing_option_frame.grid(column=1, row=0, padx=5, pady=5)
 # Add a label and radiobutton for each timing option
 for i, option in enumerate(timing_option_options):
     ttk.Radiobutton(timing_option_frame, text=option["text"], variable=timing_option_choice,
@@ -315,7 +343,7 @@ port_option_options = [
     {"text": "Top 20", "value": "--top-ports 20"},
     {"text": "Top 100", "value": "--top-ports 100"},
     {"text": "Top 1000", "value": "--top-ports 1000"},
-    {"text": "All Ports (* Very Slow)", "value": "-p-"}
+    {"text": "All Ports(* Very Slow)", "value": "-p-"}
 ]
 # Create a frame to group the port options
 port_option_frame = ttk.LabelFrame(options_frame, text="Port Options")
@@ -341,7 +369,8 @@ addt_args = ttk.Label(param_option_frame, text="Additional Arguments")
 addt_args.grid(column=0, row=2, padx=5, pady=2)
 addt_args_entry = ttk.Entry(param_option_frame)
 create_tooltip(addt_args_entry,
-               " For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments. Use \"-h\" \n for nmap help")
+               "For Example '-Pn' for no ping or\n enter additional scan types. Takes\n any valid nmap arguments. Use "
+               "\"-h\" \n for nmap help")
 addt_args_entry.grid(column=0, row=3, padx=5, pady=5)
 
 # Set up the Aggressive scan options Checkbutton
@@ -356,7 +385,8 @@ create_tooltip(aggressive_scan_options_checkbutton,
 # Output text widget
 text_label = ttk.LabelFrame(options_frame, text="Output:")
 text_label.grid(column=2, row=0, padx=5, pady=5, ipadx=5, ipady=5)
-text = Text(options_frame, width=60, height=30)
+text = Text(options_frame, width=60, height=37)
+text.config(state="disabled")
 text.tag_configure('margin', lmargin1=10, lmargin2=10, rmargin=10, spacing1=0)
 text.grid(column=2, row=0, rowspan=4, sticky="e", padx=5, pady=5)
 
