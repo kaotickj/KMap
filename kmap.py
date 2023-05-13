@@ -252,7 +252,7 @@ root.columnconfigure(1, weight=3)
 
 app = Application(master=root)
 
-logo_file = "alien.png"
+logo_file = "icon.ico"
 if os.path.exists(logo_file):
     logo = PhotoImage(file=logo_file)
     root.wm_iconphoto(True, logo)
@@ -299,8 +299,8 @@ output_entry.grid(column=0, row=6, padx=5, pady=2)
 scan_type_choice = tk.StringVar(value="")
 scan_type_options = [
     {"text": "Default", "value": ""},
+    {"text": "Service version scan", "value": "-sV"},
     {"text": "TCP NULL scan", "value": "-sN"},
-    {"text": "TCP SYN scan", "value": "-sS"},
     {"text": "TCP ACK scan", "value": "-sA"},
     {"text": "TCP FIN scan", "value": "-sF"},
     {"text": "TCP connect scan", "value": "-sT"},
@@ -340,12 +340,12 @@ for i, option in enumerate(nmap_script_options):
                     value=option["value"]).grid(column=1, row=i, sticky="W", padx=5, pady=2)
 
 # Set up the timing options radio buttons
-timing_option_choice = tk.StringVar(value="-T3")
+timing_option_choice = tk.StringVar(value="")
 timing_option_options = [
     {"text": "Paranoid timing (-T0)", "value": "-T0"},
     {"text": "Sneaky timing (-T1)", "value": "-T1"},
     {"text": "Polite timing (-T2)", "value": "-T2"},
-    {"text": "Default (normal) timing (-T3)", "value": "-T3"},
+    {"text": "Default (normal) timing (-T3)", "value": ""},
     {"text": "Aggressive timing (-T4)", "value": "-T4"},
     {"text": "Insane timing (-T5)", "value": "-T5"}
 ]
@@ -363,7 +363,7 @@ port_option_options = [
     {"text": "Default", "value": ""},
     {"text": "Top 20", "value": "--top-ports 20"},
     {"text": "Top 100", "value": "--top-ports 100"},
-    {"text": "Top 1000", "value": "--top-ports 1000"},
+    {"text": "Top 500", "value": "--top-ports 500"},
     {"text": "All Ports(* Very Slow)", "value": "-p-"}
 ]
 # Create a frame to group the port options
