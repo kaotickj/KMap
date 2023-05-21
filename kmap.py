@@ -252,10 +252,6 @@ root.columnconfigure(1, weight=3)
 
 app = Application(master=root)
 
-logo_file = "icon.ico"
-if os.path.exists(logo_file):
-    logo = PhotoImage(file=logo_file)
-    root.wm_iconphoto(True, logo)
 
 # Set up the IP address entry field
 ip_address_label = ttk.Label(root, text="IP address or hostname to scan:")
