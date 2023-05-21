@@ -248,7 +248,7 @@ root.rowconfigure(0, weight=1)
 root.rowconfigure(1, weight=3)
 root.columnconfigure(0, weight=1)
 root.columnconfigure(1, weight=3)
-# root.resizable(False, False)
+root.resizable(False, False)
 
 app = Application(master=root)
 
